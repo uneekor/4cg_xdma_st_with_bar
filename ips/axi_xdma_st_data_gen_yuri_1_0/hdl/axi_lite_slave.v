@@ -47,7 +47,6 @@ module axi_lite_slave (input wire axi_clk,
     
     reg [511:0] data_reg;
     reg arready_reg;
-    reg [5:0] araddr_reg;
     reg rvalid_reg;
     reg [31:0] rdata_reg;
     reg awready_reg;
@@ -68,9 +67,9 @@ module axi_lite_slave (input wire axi_clk,
     assign axi_rresp   = rresp_reg;
     
     
-    assign config_reg0 = data_reg[31:0];
-    assign config_reg1 = data_reg[63:32];
-    assign config_reg2 = data_reg[95:64];
+    assign config_reg0 = data_reg[0 +: 32];
+    assign config_reg1 = data_reg[32 +: 32];
+    assign config_reg2 = data_reg[64 +: 64];
     wire [31:0] data_write_mask;
     generate
     genvar i;
@@ -90,27 +89,26 @@ module axi_lite_slave (input wire axi_clk,
     always @(posedge axi_clk) begin
         if (!axi_rstn) begin
             read_state  <= READ_IDLE;
-            araddr_reg  <= 0;
             rdata_reg   <= 0;
             arready_reg <= 0;
             rresp_reg   <= 2'b00;
+            rvalid_reg  <= 0;
         end
         else begin
             case(read_state)
                 READ_IDLE: begin
-                    read_state <= READ_ADDRESS;
+                    read_state  <= READ_ADDRESS;
+                    arready_reg <= 1'b1;
                 end
                 READ_ADDRESS: begin
-                    arready_reg <= 1'b1;
                     if (axi_arvalid && axi_arready) begin
                         arready_reg <= 1'b0;
-                        araddr_reg  <= axi_araddr % 6'd61; // 61부터는 32비트를 채울 비트가 모자람
-                        read_state  <= READ_DATA;
+                        read_state <= READ_DATA;
+                        rvalid_reg <= 1'b1;
+                        rdata_reg  <= data_reg[(axi_araddr & 6'b111100 )*8 +: 32];
                     end
                 end
                 READ_DATA: begin
-                    rdata_reg  <= data_reg[araddr_reg*8 +: 32];
-                    rvalid_reg <= 1'b1;
                     if (axi_rready && axi_rvalid) begin
                         rvalid_reg <= 1'b0;
                         read_state <= READ_IDLE;
@@ -135,26 +133,26 @@ module axi_lite_slave (input wire axi_clk,
             case(write_state)
                 WRITE_IDLE: begin
                     write_state <= WRITE_ADDRESS;
+                    awready_reg <= 1'b1;
                 end
                 WRITE_ADDRESS: begin
-                    awready_reg <= 1'b1;
                     if (axi_awvalid && axi_awready) begin
                         awready_reg <= 1'b0;
-                        waddr_reg   <= axi_awaddr % 6'd61; // 61부터는 32비트를 채울 비트가 모자람
+                        waddr_reg   <= axi_awaddr & 6'b111100; // 주소 4Byte 정렬
                         write_state <= WRITE_DATA;
+                        wready_reg  <= 1'b1;
                     end
                 end
                 WRITE_DATA: begin
-                    wready_reg <= 1'b1;
                     if (axi_wvalid && axi_wready) begin
                         wready_reg <= 1'b0;
                         // wstrb 가 1인 byte만 write
                         data_reg[waddr_reg*8 +: 32] <= (data_write_mask & axi_wdata) | (data_reg[waddr_reg*8 +: 32] & (~data_write_mask));
-                        write_state                 <= WRITE_RESPONSE;
+                        write_state                   <= WRITE_RESPONSE;
+                        bvalid_reg                    <= 1'b1;
                     end
                 end
                 WRITE_RESPONSE: begin
-                    bvalid_reg <= 1'b1;
                     if (axi_bready && axi_bvalid) begin
                         bvalid_reg  <= 1'b0;
                         write_state <= WRITE_IDLE;
