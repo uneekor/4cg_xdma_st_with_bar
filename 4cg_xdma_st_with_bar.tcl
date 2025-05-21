@@ -18,6 +18,16 @@
 proc checkRequiredFiles { origin_dir} {
   set status true
   set files [list \
+ "[file normalize "$origin_dir/vivado_project/4cg_xdma_st_with_bar.srcs/utils_1/imports/synth_1/top_module.dcp"]"\
+  ]
+  foreach ifile $files {
+    if { ![file isfile $ifile] } {
+      puts " Could not find local file $ifile "
+      set status false
+    }
+  }
+
+  set files [list \
  "[file normalize "$origin_dir/src/design/top_module.v"]"\
  "[file normalize "$origin_dir/src/constraints/puzhi.xdc"]"\
   ]
@@ -156,12 +166,11 @@ set_property -name "simulator.xsim_version" -value "2024.2" -objects $obj
 set_property -name "simulator_language" -value "Mixed" -objects $obj
 set_property -name "sim_compile_state" -value "1" -objects $obj
 set_property -name "use_inline_hdl_ip" -value "1" -objects $obj
-set_property -name "webtalk.modelsim_export_sim" -value "3" -objects $obj
-set_property -name "webtalk.questa_export_sim" -value "3" -objects $obj
-set_property -name "webtalk.riviera_export_sim" -value "3" -objects $obj
-set_property -name "webtalk.vcs_export_sim" -value "3" -objects $obj
-set_property -name "webtalk.xcelium_export_sim" -value "3" -objects $obj
-set_property -name "webtalk.xsim_export_sim" -value "3" -objects $obj
+set_property -name "webtalk.modelsim_export_sim" -value "4" -objects $obj
+set_property -name "webtalk.questa_export_sim" -value "4" -objects $obj
+set_property -name "webtalk.riviera_export_sim" -value "4" -objects $obj
+set_property -name "webtalk.vcs_export_sim" -value "4" -objects $obj
+set_property -name "webtalk.xsim_export_sim" -value "4" -objects $obj
 set_property -name "xpm_libraries" -value "XPM_CDC XPM_FIFO XPM_MEMORY" -objects $obj
 
 # Create 'sources_1' fileset (if not found)
@@ -195,6 +204,21 @@ add_files -norecurse -fileset $obj $files
 set obj [get_filesets sources_1]
 set_property -name "dataflow_viewer_settings" -value "min_width=16" -objects $obj
 set_property -name "top" -value "top_module" -objects $obj
+set_property -name "top_auto_set" -value "0" -objects $obj
+
+# Create 'constrs_1' fileset (if not found)
+if {[string equal [get_filesets -quiet constrs_1] ""]} {
+  create_fileset -constrset constrs_1
+}
+
+# Set 'constrs_1' fileset object
+set obj [get_filesets constrs_1]
+
+# Empty (no sources present)
+
+# Set 'constrs_1' fileset properties
+set obj [get_filesets constrs_1]
+set_property -name "target_part" -value "xczu4cg-sfvc784-1-e" -objects $obj
 
 # Create 'puzhi-4cg' fileset (if not found)
 if {[string equal [get_filesets -quiet puzhi-4cg] ""]} {
@@ -229,11 +253,25 @@ set obj [get_filesets sim_1]
 set obj [get_filesets sim_1]
 set_property -name "sim_wrapper_top" -value "1" -objects $obj
 set_property -name "top" -value "top_module" -objects $obj
+set_property -name "top_auto_set" -value "0" -objects $obj
 set_property -name "top_lib" -value "xil_defaultlib" -objects $obj
 
 # Set 'utils_1' fileset object
 set obj [get_filesets utils_1]
-# Empty (no sources present)
+# Add local files from the original project (-no_copy_sources specified)
+set files [list \
+ [file normalize "${origin_dir}/vivado_project/4cg_xdma_st_with_bar.srcs/utils_1/imports/synth_1/top_module.dcp" ]\
+]
+set added_files [add_files -fileset utils_1 $files]
+
+# Set 'utils_1' fileset file properties for remote files
+# None
+
+# Set 'utils_1' fileset file properties for local files
+set file "synth_1/top_module.dcp"
+set file_obj [get_files -of_objects [get_filesets utils_1] [list "*$file"]]
+set_property -name "netlist_only" -value "0" -objects $file_obj
+
 
 # Set 'utils_1' fileset properties
 set obj [get_filesets utils_1]
