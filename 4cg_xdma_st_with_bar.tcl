@@ -18,16 +18,6 @@
 proc checkRequiredFiles { origin_dir} {
   set status true
   set files [list \
- "[file normalize "$origin_dir/vivado_project/4cg_xdma_st_with_bar.srcs/utils_1/imports/synth_1/top_module.dcp"]"\
-  ]
-  foreach ifile $files {
-    if { ![file isfile $ifile] } {
-      puts " Could not find local file $ifile "
-      set status false
-    }
-  }
-
-  set files [list \
  "[file normalize "$origin_dir/src/design/top_module.v"]"\
  "[file normalize "$origin_dir/src/constraints/puzhi.xdc"]"\
   ]
@@ -166,11 +156,11 @@ set_property -name "simulator.xsim_version" -value "2024.2" -objects $obj
 set_property -name "simulator_language" -value "Mixed" -objects $obj
 set_property -name "sim_compile_state" -value "1" -objects $obj
 set_property -name "use_inline_hdl_ip" -value "1" -objects $obj
-set_property -name "webtalk.modelsim_export_sim" -value "4" -objects $obj
-set_property -name "webtalk.questa_export_sim" -value "4" -objects $obj
-set_property -name "webtalk.riviera_export_sim" -value "4" -objects $obj
-set_property -name "webtalk.vcs_export_sim" -value "4" -objects $obj
-set_property -name "webtalk.xsim_export_sim" -value "4" -objects $obj
+set_property -name "webtalk.modelsim_export_sim" -value "9" -objects $obj
+set_property -name "webtalk.questa_export_sim" -value "9" -objects $obj
+set_property -name "webtalk.riviera_export_sim" -value "9" -objects $obj
+set_property -name "webtalk.vcs_export_sim" -value "9" -objects $obj
+set_property -name "webtalk.xsim_export_sim" -value "9" -objects $obj
 set_property -name "xpm_libraries" -value "XPM_CDC XPM_FIFO XPM_MEMORY" -objects $obj
 
 # Create 'sources_1' fileset (if not found)
@@ -258,20 +248,7 @@ set_property -name "top_lib" -value "xil_defaultlib" -objects $obj
 
 # Set 'utils_1' fileset object
 set obj [get_filesets utils_1]
-# Add local files from the original project (-no_copy_sources specified)
-set files [list \
- [file normalize "${origin_dir}/vivado_project/4cg_xdma_st_with_bar.srcs/utils_1/imports/synth_1/top_module.dcp" ]\
-]
-set added_files [add_files -fileset utils_1 $files]
-
-# Set 'utils_1' fileset file properties for remote files
-# None
-
-# Set 'utils_1' fileset file properties for local files
-set file "synth_1/top_module.dcp"
-set file_obj [get_files -of_objects [get_filesets utils_1] [list "*$file"]]
-set_property -name "netlist_only" -value "0" -objects $file_obj
-
+# Empty (no sources present)
 
 # Set 'utils_1' fileset properties
 set obj [get_filesets utils_1]
@@ -300,7 +277,7 @@ proc cr_bd_design_1 { parentCell } {
   xilinx.com:ip:zynq_ultra_ps_e:3.5\
   xilinx.com:ip:util_ds_buf:2.2\
   xilinx.com:ip:xdma:4.1\
-  user.org:user:axi_xdma_st_data_gen_yuri:1.0\
+  user.org:user:axi_xdma_st_data_gen_yuri:1.1\
   xilinx.com:ip:system_ila:1.1\
   xilinx.com:inline_hdl:ilconstant:1.0\
   xilinx.com:ip:smartconnect:1.0\
@@ -553,7 +530,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 
   # Create instance: axi_xdma_st_data_gen_0, and set properties
-  set axi_xdma_st_data_gen_0 [ create_bd_cell -type ip -vlnv user.org:user:axi_xdma_st_data_gen_yuri:1.0 axi_xdma_st_data_gen_0 ]
+  set axi_xdma_st_data_gen_0 [ create_bd_cell -type ip -vlnv user.org:user:axi_xdma_st_data_gen_yuri:1.1 axi_xdma_st_data_gen_0 ]
   set_property CONFIG.NUMBER_OF_OUTPUT_WORDS {0} $axi_xdma_st_data_gen_0
 
 
@@ -664,7 +641,9 @@ if { $obj != "" } {
 set obj [get_runs synth_1]
 set_property -name "constrset" -value "puzhi-4cg" -objects $obj
 set_property -name "part" -value "xczu4cg-sfvc784-1-e" -objects $obj
+set_property -name "auto_incremental_checkpoint" -value "0" -objects $obj
 set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
+set_property -name "steps.synth_design.args.incremental_mode" -value "off" -objects $obj
 
 # set the current synth run
 current_run -synthesis [get_runs synth_1]
